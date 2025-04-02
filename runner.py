@@ -22,7 +22,7 @@ class Runner:
     def __init__(self, agent_paths: List[str]):
         """
         Initialize the Runner with paths to agent executables.
-        
+
         Args:
             agent_paths: List of paths to the three agent executables
         """
@@ -36,7 +36,7 @@ class Runner:
     def initialize_game(self, map_path: str, log_path: str = "./data/logs/final_results.json"):
         """
         Initialize the game with the specified map.
-        
+
         Args:
             map_path: Path to the map JSON file
             log_path: Path for logging game data
@@ -49,7 +49,7 @@ class Runner:
 
         self.logger.info(f"Game initialized with map: {map_path}")
 
-    def run_game(self):
+    def run_game(self, file_name):
         """
         Run the game until completion (all ships sink or max moves reached).
         """
@@ -58,7 +58,7 @@ class Runner:
         agent_inputs = self.judger.generate_agent_inputs()
         for i, agent_path in enumerate(self.agent_paths):
             agent_input = agent_inputs[i]
-            position_str = self.execute_agent(agent_path, agent_input)
+            position_str = self.execute_agent(agent_path, agent_input, file_name + str(i))
             # Parse the position from the agent's output
             # Format should be "q r s"
             try:
@@ -87,7 +87,7 @@ class Runner:
             moves = []
             for i, agent_path in enumerate(self.agent_paths):
                 if self.judger.game_state.players[i].alive:
-                    move_str = self.execute_agent(agent_path, agent_inputs[i])
+                    move_str = self.execute_agent(agent_path, agent_inputs[i], f'{file_name}/{i}')
                     moves.append(move_str)
                 else:
                     moves.append("")  # Empty move for inactive agents
@@ -98,14 +98,14 @@ class Runner:
             # Log the game state
             self.game_history.append(self._get_current_game_state())
 
-    def execute_agent(self, agent_path: str, input_data: str) -> str:
+    def execute_agent(self, agent_path: str, input_data: str, file_name) -> str:
         """
         Execute an agent program and get its response.
-        
+
         Args:
             agent_path: Path to the agent executable
             input_data: Input data to send to the agent
-            
+
         Returns:
             The agent's response as a string
         """
@@ -114,7 +114,10 @@ class Runner:
             input_file = "MAP.INP"
             # get agent directory path
             agent_path = os.path.abspath(agent_path)
-            agent_dir = os.path.dirname(agent_path)
+            agent_dir = f'./temp/{file_name}'
+
+            if not os.path.exists(agent_dir):
+                os.makedirs(agent_dir)
 
             with open(os.path.join(agent_dir, input_file), "w") as f:
                 f.write(input_data)
@@ -146,7 +149,7 @@ class Runner:
     def check_game_end(self) -> bool:
         """
         Check if the game has ended (all ships sunk or max moves reached).
-        
+
         Returns:
             True if the game has ended, False otherwise
         """

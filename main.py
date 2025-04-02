@@ -26,7 +26,7 @@ def main():
     runner.initialize_game(args.map, args.output)
 
     # Run the game until completion
-    runner.run_game()
+    runner.run_game(args.map.split('/')[-1].split('.')[0])
 
     # Report the final results
     runner.report_results()

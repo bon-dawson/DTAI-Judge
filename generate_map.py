@@ -1,6 +1,7 @@
 import random
 import os
 import json
+import argparse
 
 def getCyclicKeys(cube):
     keys = []
@@ -90,7 +91,6 @@ def generateDanger(groupArray, selectedCells, radius):
     for key in dangerCells:
         selectedCells[key] = {"type": "danger"}
 
-
 def generateShield(groupArray, selectedCells):
     shieldAvailableGroups = [g for g in groupArray if len(g) == 3 and g[0] not in selectedCells]
     if shieldAvailableGroups:
@@ -140,8 +140,6 @@ def exportMap(selectedCells, radius, max_moves):
 
         mapData["cells"].append({"q": q, "r": r, "s": s, "value": value})
 
-    os.makedirs("maps", exist_ok=True)
-
     existing_files = [f for f in os.listdir("maps") if f.startswith("map_") and f.endswith(".json")]
 
     if existing_files:
@@ -187,10 +185,23 @@ def generateMap(radius=10, max_moves=100):
 
     exportMap(selectedCells, radius, max_moves)
 
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description="Generate Map")
+    parser.add_argument("--num", default=10, help="Number of maps for each radius")
+    return parser.parse_args()
+
 def main():
+    args = parse_args()
+
+    folder_path = "maps"
+    if os.path.exists(folder_path):
+       os.system(f"rm -rf {folder_path}")
+    os.makedirs(folder_path)
+
     radiuss = []
     for num in range(8,16):
-        radiuss.extend([num] * 10)
+        radiuss.extend([num] * int(args.num))
 
     for radius in radiuss:
         max_moves = random.randint(50,150)
