@@ -58,7 +58,7 @@ class Runner:
         agent_inputs = self.judger.generate_agent_inputs()
         for i, agent_path in enumerate(self.agent_paths):
             agent_input = agent_inputs[i]
-            position_str = self.execute_agent(agent_path, agent_input, file_name + str(i))
+            position_str = self.execute_agent(agent_path, agent_input, f'{file_name}/{i}')
             # Parse the position from the agent's output
             # Format should be "q r s"
             try:
