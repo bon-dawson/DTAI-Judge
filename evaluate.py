@@ -6,17 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-async def run_test(map, agents, output_path):
-    agents_str = " ".join(args.agents)
-    cmd = f"python main.py --map maps/{map} --agents {agents_str} --output {output_path}/output_{map[:-5]}.json"
-    process = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
-    )
-    stdout, stderr = await process.communicate()
-    return stdout, stderr
-
 def read_last_json_element(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -39,7 +28,7 @@ def visualize(output_path):
     win_counts = {}
 
     for output in outputs:
-        last_element = read_last_json_element(output_path + output)
+        last_element = read_last_json_element(os.path.join(output_path, output))
 
         if last_element is None:
             continue
@@ -149,13 +138,36 @@ def parse_args():
     parser.add_argument("--output", default="./output/json", help="Output path for game logs")
     return parser.parse_args()
 
-async def main(args):
+def run_test(map_path, map, agents, output_path):
+    agents_str = " ".join(agents)
+    cmd = f"python main.py --map {map_path}/{map} --agents {agents_str} --output {output_path}/{map[:-5]}.json"
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        text=True
+    )
+    stdout, stderr = process.communicate()
+    return stdout, stderr
+
+def run_map_test(args_tuple):
+    map_path, map_file, agents, output_path = args_tuple
+    return run_test(map_path, map_file, agents, output_path)
+
+def main(args):
     maps = os.listdir(args.map)
 
-    tasks = [run_test(map, args.agents, args.output) for map in maps]
-    await asyncio.gather(*tasks)
+    from concurrent.futures import ThreadPoolExecutor
+
+    # Create arguments for each map test
+    map_args = [(args.map, map_file, args.agents, args.output) for map_file in maps]
+
+    # Use ThreadPoolExecutor to run tests in parallel
+    with ThreadPoolExecutor() as executor:
+        results = list(executor.map(run_map_test, map_args))
 
 if __name__ == "__main__":
     args = parse_args()
-    asyncio.run(main(args))
+    main(args)
     visualize(args.output)
